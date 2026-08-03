@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from fastapi_zero.schemas import UserPublic
-from fastapi_zero.security import creat_access_token
+from fastapi_zero.security import create_access_token
 
 
 def test_create_user(client):
@@ -101,7 +101,7 @@ def test_update_integrity_error(client, user, token):
 
 
 def test_current_user_email_not_found(client, user):
-    token = creat_access_token({'email': 'teste'})
+    token = create_access_token({'email': 'teste'})
 
     response = client.delete(
         f'/users/{user.id}',
@@ -113,7 +113,7 @@ def test_current_user_email_not_found(client, user):
 
 
 def test_current_user_no_found_in_db(client, user):
-    token = creat_access_token({'sub': f'{user.email}teste'})
+    token = create_access_token({'sub': f'{user.email}teste'})
 
     response = client.delete(
         f'/users/{user.id}',
@@ -122,3 +122,26 @@ def test_current_user_no_found_in_db(client, user):
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response.json() == {'detail': 'Could not validate credentials'}
+
+
+def test_update_user_with_wrong_user(client, other_user, token):
+    response = client.put(
+        f'/users/{other_user.id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'username': 'bob',
+            'email': 'bob@example.com',
+            'password': 'mynewpassword',
+        },
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permissions'}
+
+
+def test_delete_user_wrong_user(client, other_user, token):
+    response = client.delete(
+        f'/users/{other_user.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permissions'}
