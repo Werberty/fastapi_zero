@@ -22,6 +22,34 @@ def test_create_user(client):
     }
 
 
+def test_create_user_exists_username(client, user):
+    response = client.post(
+        '/users/',
+        json={
+            'username': user.username,
+            'email': 'test1@example.com',
+            'password': 'secret',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Username already exists'}
+
+
+def test_create_user_exists_email(client, user):
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'alice',
+            'email': user.email,
+            'password': 'secret',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'E-mail already exists'}
+
+
 def test_read_users(client, user, token):
     user_schema = UserPublic.model_validate(user).model_dump()
     response = client.get(
@@ -73,26 +101,25 @@ def test_read_user(client, user, token):
     assert response.json() == user_schema
 
 
-def test_update_integrity_error(client, user, token):
-    # Criando um registro para "alice"
-    client.post(
-        '/users/',
-        headers={'Authorization': f'Bearer {token}'},
-        json={
-            'username': 'alice',
-            'email': 'alice@example.com',
-            'password': 'secret',
-        },
+def test_read_user_not_found(client, user, token):
+    response = client.get(
+        f'/users/{user.id + 1}',
+        headers={'Authorization': f'Bearer {token}'}
     )
 
-    # Alterando o user.username das fixture para alice
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'User not found'}
+
+
+def test_update_integrity_error(client, user, other_user, token):
+    # Alterando o user.username das fixture para other_user
     response = client.put(
         f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
-            'username': 'alice',
-            'email': 'bob@example.com',
-            'password': 'mynewpassword',
+            'username': other_user.username,
+            'email': 'alice@example.com',
+            'password': 'aliceP123wer',
         },
     )
 
