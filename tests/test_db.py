@@ -27,4 +27,5 @@ async def test_create_user(session, mock_db_time):
             'password': 'secret',
             'updated_at': time,
             'created_at': time,
+            'todos': [],
         }

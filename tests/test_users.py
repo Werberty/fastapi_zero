@@ -103,8 +103,7 @@ def test_read_user(client, user, token):
 
 def test_read_user_not_found(client, user, token):
     response = client.get(
-        f'/users/{user.id + 1}',
-        headers={'Authorization': f'Bearer {token}'}
+        f'/users/{user.id + 1}', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
