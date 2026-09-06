@@ -3,7 +3,7 @@ from http import HTTPStatus
 import factory
 import factory.fuzzy
 import pytest
-from sqlalchemy import select
+from sqlalchemy.exc import DataError
 
 from fastapi_zero.models import Todo, TodoState
 
@@ -49,10 +49,9 @@ async def test_create_todo_error(session, user):
     )
 
     session.add(todo)
-    await session.commit()
 
-    with pytest.raises(LookupError):
-        await session.scalar(select(Todo))
+    with pytest.raises(DataError):
+        await session.commit()
 
 
 @pytest.mark.asyncio
